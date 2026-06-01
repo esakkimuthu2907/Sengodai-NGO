@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: blood-connect-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: MONGODB_URI
+        prompt: false
+      - key: JWT_SECRET
+        prompt: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"

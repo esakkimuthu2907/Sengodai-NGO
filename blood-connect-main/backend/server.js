@@ -70,14 +70,33 @@ const rateLimit = require('express-rate-limit');
 const isDevOrTest = process.env.NODE_ENV !== 'production';
 
 // Enable CORS — restrict to frontend URL in production
-const allowedOrigins = [
-  'http://localhost:8080',
-  'http://localhost:3000',
-  process.env.FRONTEND_URL
-].filter(Boolean);
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [
+      'https://blood-connect-frontend.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean)
+  : [
+      'http://localhost:8080',
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+
 app.use(cors({
   origin: function(origin, callback) {
-    return callback(null, true);
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else if (process.env.NODE_ENV !== 'production') {
+      // In development, allow any origin
+      callback(null, true);
+    } else {
+      // In production, reject disallowed origins
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: true,
   optionsSuccessStatus: 200
