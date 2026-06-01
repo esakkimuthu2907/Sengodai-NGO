@@ -1,0 +1,337 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+
+    --primary: 354 80% 52%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 354 90% 62%;
+    --primary-soft: 354 100% 96%;
+
+    --secondary: 0 0% 97%;
+    --secondary-foreground: 0 0% 12%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 42%;
+
+    --accent: 354 100% 96%;
+    --accent-foreground: 354 80% 40%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 0 0% 92%;
+    --input: 0 0% 92%;
+    --ring: 354 80% 52%;
+
+    --radius: 0.75rem;
+
+    --gradient-primary: linear-gradient(135deg, hsl(354 80% 52%), hsl(354 90% 62%));
+    --gradient-soft: linear-gradient(135deg, hsl(354 100% 98%), hsl(0 0% 100%));
+    --shadow-soft: 0 4px 20px -4px hsl(354 80% 52% / 0.15);
+    --shadow-card: 0 2px 12px -2px hsl(0 0% 0% / 0.06);
+    --shadow-glow: 0 10px 40px -10px hsl(354 80% 52% / 0.4);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 25%;
+    --sidebar-primary: 354 80% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 354 100% 96%;
+    --sidebar-accent-foreground: 354 80% 40%;
+    --sidebar-border: 0 0% 92%;
+    --sidebar-ring: 354 80% 52%;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 354 80% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 354 90% 65%;
+    --primary-soft: 354 50% 18%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 354 50% 18%;
+    --accent-foreground: 354 80% 70%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 354 80% 55%;
+    --sidebar-background: 0 0% 11%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 354 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 354 80% 70%;
+    --sidebar-border: 0 0% 18%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground font-sans antialiased; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  h1,h2,h3,h4 { font-family: 'Plus Jakarta Sans', sans-serif; @apply font-bold tracking-tight; }
+}
+
+@layer utilities {
+  .gradient-primary { background: var(--gradient-primary); }
+  .gradient-soft { background: var(--gradient-soft); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
+  .text-gradient { background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
+}
+
+@keyframes pulse-heart {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-pulse-heart { animation: pulse-heart 1.5s ease-in-out infinite; }
+.animate-float { animation: float 4s ease-in-out infinite; }
+
+
+/* ─── Splash Screen ─── */
+
+@keyframes splash-logo-in {
+  0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+  60% { transform: scale(1.08) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes splash-title-in {
+  0% { opacity: 0; transform: translateY(20px); letter-spacing: 0.5em; }
+  100% { opacity: 1; transform: translateY(0); letter-spacing: 0.08em; }
+}
+@keyframes splash-fade-up {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes splash-heart-beat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.2); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.15); }
+  56% { transform: scale(1); }
+}
+@keyframes splash-progress-glow {
+  0%, 100% { box-shadow: 0 0 8px hsl(354 80% 52% / 0.4); }
+  50% { box-shadow: 0 0 20px hsl(354 80% 52% / 0.7); }
+}
+
+.splash-screen {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.splash-fade-out {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.splash-bg-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 10% 20%, hsl(354 80% 52% / 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 85% 15%, hsl(354 80% 52% / 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, hsl(354 80% 52% / 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 20% 85%, hsl(354 80% 52% / 0.03) 0%, transparent 40%);
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  z-index: 1;
+}
+
+.splash-logo-container {
+  animation: splash-logo-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  margin-bottom: 1.25rem;
+}
+.splash-logo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow:
+    0 8px 32px hsl(354 80% 52% / 0.25),
+    0 0 0 3px hsl(354 80% 52% / 0.1);
+}
+
+.splash-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 2.75rem;
+  color: hsl(354, 80%, 52%);
+  letter-spacing: 0.08em;
+  margin: 0;
+  animation: splash-title-in 0.7s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.splash-subtitle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  animation: splash-fade-up 0.6s 0.5s ease both;
+}
+.splash-heartbeat {
+  width: 60px;
+  height: 20px;
+}
+.splash-subtitle {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.18em;
+  color: hsl(0, 0%, 25%);
+}
+
+.splash-heart {
+  margin-top: 0.75rem;
+  animation: splash-heart-beat 1.4s ease-in-out infinite, splash-fade-up 0.5s 0.7s ease both;
+}
+
+.splash-tagline {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: hsl(0, 0%, 40%);
+  font-style: italic;
+  animation: splash-fade-up 0.6s 0.8s ease both;
+}
+
+.splash-loading {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  animation: splash-fade-up 0.5s 1s ease both;
+}
+.splash-loading-heart {
+  animation: splash-heart-beat 1.4s ease-in-out infinite;
+}
+.splash-loading-text {
+  font-size: 0.8rem;
+  color: hsl(0, 0%, 50%);
+  letter-spacing: 0.1em;
+}
+
+.splash-progress-track {
+  width: 160px;
+  height: 3px;
+  border-radius: 4px;
+  background: hsl(354 80% 52% / 0.12);
+  margin-top: 0.75rem;
+  overflow: hidden;
+  animation: splash-fade-up 0.5s 1.1s ease both;
+}
+.splash-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, hsl(354, 80%, 52%), hsl(354, 90%, 62%));
+  transition: width 0.1s linear;
+  animation: splash-progress-glow 1.5s ease-in-out infinite;
+}
+
+.splash-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}
+.splash-wave {
+  display: block;
+  width: 100%;
+  height: 80px;
+}
+
+.splash-features {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+  padding: 1rem 1.5rem 1.75rem;
+}
+.splash-feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  max-width: 120px;
+  text-align: center;
+  border-right: 1px solid hsl(0 0% 100% / 0.15);
+  padding: 0 0.75rem;
+  animation: splash-fade-up 0.5s 1.3s ease both;
+}
+.splash-feature:last-child {
+  border-right: none;
+}
+.splash-feature-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: hsl(0 0% 100% / 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+.splash-feature-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: white;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+}
+
+@media (min-width: 768px) {
+  .splash-logo {
+    width: 150px;
+    height: 150px;
+  }
+  .splash-title {
+    font-size: 3.5rem;
+  }
+  .splash-subtitle {
+    font-size: 1.1rem;
+  }
+  .splash-feature {
+    max-width: 140px;
+  }
+  .splash-feature-label {
+    font-size: 0.75rem;
+  }
+  .splash-wave {
+    height: 100px;
+  }
+}
