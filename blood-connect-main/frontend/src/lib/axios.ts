@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api',
+  baseURL:
+    import.meta.env.VITE_API_URL || 'https://blood-connect-backend-ten.vercel.app/api',
 });
 
 // Add a request interceptor to attach the JWT token
