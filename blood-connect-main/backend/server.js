@@ -39,7 +39,7 @@ const startApp = async () => {
 
       // Create a default volunteer account for local development/demo
       const volunteerEmail = process.env.DEFAULT_VOLUNTEER_EMAIL || 'esakkimuthu2907@gmail.com';
-      const volunteerPassword = process.env.DEFAULT_VOLUNTEER_PASSWORD || 'Esakki2907';
+      const volunteerPassword = process.env.DEFAULT_VOLUNTEER_PASSWORD || 'Esakki123';
       const volunteerExists = await User.findOne({ email: volunteerEmail });
       if (!volunteerExists) {
         await User.create({
@@ -49,7 +49,8 @@ const startApp = async () => {
           role: 'volunteer',
           phone: '7904577032',
           location: 'Tamil Nadu',
-          bloodGroup: 'B+'
+          bloodGroup: 'B+',
+          status: 'Approved'
         });
         console.log(`Created demo volunteer: ${volunteerEmail}`);
       }
