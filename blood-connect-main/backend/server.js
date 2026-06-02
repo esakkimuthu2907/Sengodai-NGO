@@ -60,6 +60,7 @@ const startApp = async () => {
 };
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Security Middleware
 const helmet = require('helmet');
@@ -73,6 +74,7 @@ const isDevOrTest = process.env.NODE_ENV !== 'production';
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
       'https://blood-connect-frontend.vercel.app',
+      'https://frontend-six-beta-otqlq2uoqr.vercel.app',
       process.env.FRONTEND_URL
     ].filter(Boolean)
   : [
@@ -89,6 +91,8 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else if (/^https:\/\/frontend-[a-z0-9-]+-esakkimuthu-s-s-projects\.vercel\.app$/.test(origin)) {
       callback(null, true);
     } else if (process.env.NODE_ENV !== 'production') {
       // In development, allow any origin

@@ -17,12 +17,17 @@ const mongooseOptions = {
 let mongoServer = null; // Store reference to in-memory server
 
 const connectDB = async (retries = 5) => {
-  const mongoUri = process.env.MONGO_URI?.trim();
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
+  const mongoUri = (process.env.MONGO_URI || process.env.MONGODB_URI)?.trim();
 
   // Try to connect to the provided MongoDB URI first (Atlas or local)
   if (mongoUri) {
     try {
-      console.log(`🔗 Attempting to connect to MongoDB URI: ${mongoUri}`);
+      const safeMongoUri = mongoUri.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@');
+      console.log(`🔗 Attempting to connect to MongoDB URI: ${safeMongoUri}`);
       const conn = await mongoose.connect(mongoUri, mongooseOptions);
       console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
       console.log(`📊 Database: ${conn.connection.name}`);
@@ -36,7 +41,7 @@ const connectDB = async (retries = 5) => {
         return connectDB(retries - 1);
       }
       console.error('➡️  Please ensure MongoDB is running at the configured MONGO_URI and that the URI is correct.');
-      process.exit(1);
+      throw connectionError;
     }
   }
 
@@ -55,7 +60,7 @@ const connectDB = async (retries = 5) => {
     if (!allowInMemory) {
       console.error('❌ No MongoDB available and in-memory fallback is disabled.');
       console.error('➡️  Start a local MongoDB, set MONGO_URI in your environment, or set ALLOW_IN_MEMORY=true for testing.');
-      process.exit(1);
+      throw localError;
     }
 
     console.log('🔄 Falling back to In-Memory MongoDB (ALLOW_IN_MEMORY=true)...');
@@ -82,7 +87,7 @@ const connectDB = async (retries = 5) => {
     } catch (fallbackError) {
       console.error(`❌ All connection attempts failed: ${fallbackError.message}`);
       console.error(`Please ensure MongoDB is running or configure MONGO_URI in .env`);
-      process.exit(1);
+      throw fallbackError;
     }
   }
 };

@@ -2,7 +2,11 @@ import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { toast } from "@/hooks/use-toast";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://127.0.0.1:5000";
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ||
+  (import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "")
+    : "http://127.0.0.1:5000");
 
 let socket: Socket | null = null;
 

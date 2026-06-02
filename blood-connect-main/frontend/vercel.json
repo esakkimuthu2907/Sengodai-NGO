@@ -1,6 +1,12 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/((?!assets/|favicon.ico|robots.txt|placeholder.svg|sengodai-logo.png|splash-bg.png).*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/api/:path*",

@@ -27,9 +27,11 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
   });
 } else {
   // Fallback to local storage if no Cloudinary config
-  const uploadDir = path.join(__dirname, '../uploads');
+  const uploadDir = process.env.VERCEL
+    ? path.join('/tmp', 'uploads')
+    : path.join(__dirname, '../uploads');
   if (!fs.existsSync(uploadDir)){
-      fs.mkdirSync(uploadDir);
+      fs.mkdirSync(uploadDir, { recursive: true });
   }
   
   storage = multer.diskStorage({

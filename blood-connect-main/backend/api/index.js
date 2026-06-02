@@ -7,6 +7,7 @@ const connectDB = require('../config/db');
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Security Middleware
 const helmet = require('helmet');
@@ -21,6 +22,7 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
       'https://blood-connect-frontend.vercel.app',
       'https://frontend-jbg2msun1-esakkimuthu-s-s-projects.vercel.app',
+      'https://frontend-six-beta-otqlq2uoqr.vercel.app',
       process.env.FRONTEND_URL
     ].filter(Boolean)
   : [
@@ -37,6 +39,8 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else if (/^https:\/\/frontend-[a-z0-9-]+-esakkimuthu-s-s-projects\.vercel\.app$/.test(origin)) {
       callback(null, true);
     } else if (process.env.NODE_ENV !== 'production') {
       // In development, allow any origin
@@ -77,21 +81,6 @@ app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
-
-// Mount routers
-app.use('/api/auth', authLimiter, require('../routes/auth'));
-app.use('/api/users', require('../routes/users'));
-app.use('/api/requests', require('../routes/requests'));
-app.use('/api/camps', require('../routes/camps'));
-app.use('/api/upload', require('../routes/upload'));
-app.use('/api/dashboard', require('../routes/dashboard'));
-app.use('/api/donations', require('../routes/donations'));
-app.use('/api/contact', require('../routes/contact'));
-app.use('/api/messages', require('../routes/messages'));
-app.use('/api/gallery', require('../routes/gallery'));
-app.use('/api/announcements', require('../routes/announcements'));
-app.use('/api/admin/db', require('../routes/admin'));
-app.use('/api', require('../routes/stats'));
 
 app.get('/', (req, res) => {
   res.send('Blood Connect API is running...');
@@ -158,7 +147,7 @@ const seedDatabase = async () => {
 // Ensure DB is connected before handling requests
 app.use(async (req, res, next) => {
   try {
-    await connectDB();
+    await connectDB(1);
     await seedDatabase();
     next();
   } catch (err) {
@@ -166,5 +155,20 @@ app.use(async (req, res, next) => {
     res.status(500).json({ error: 'Database connection failed' });
   }
 });
+
+// Mount routers after the database is ready.
+app.use('/api/auth', authLimiter, require('../routes/auth'));
+app.use('/api/users', require('../routes/users'));
+app.use('/api/requests', require('../routes/requests'));
+app.use('/api/camps', require('../routes/camps'));
+app.use('/api/upload', require('../routes/upload'));
+app.use('/api/dashboard', require('../routes/dashboard'));
+app.use('/api/donations', require('../routes/donations'));
+app.use('/api/contact', require('../routes/contact'));
+app.use('/api/messages', require('../routes/messages'));
+app.use('/api/gallery', require('../routes/gallery'));
+app.use('/api/announcements', require('../routes/announcements'));
+app.use('/api/admin/db', require('../routes/admin'));
+app.use('/api', require('../routes/stats'));
 
 module.exports = app;
