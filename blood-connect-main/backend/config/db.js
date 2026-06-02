@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const path = require('path');
 const fs = require('fs');
 
@@ -72,6 +71,7 @@ const connectDB = async (retries = 5) => {
         fs.mkdirSync(dbPath, { recursive: true });
       }
 
+      const { MongoMemoryServer } = require('mongodb-memory-server');
       mongoServer = await MongoMemoryServer.create({
         instance: {
           dbPath,
