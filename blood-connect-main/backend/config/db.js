@@ -11,8 +11,7 @@ const mongooseOptions = {
   serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
   connectTimeoutMS: 10000,
-  family: 4, // Use IPv4, skip trying IPv6
-  tls: true   // Explicitly enable TLS for Atlas (fixes OpenSSL 3 / Node 20+ issues)
+  family: 4 // Use IPv4, skip trying IPv6
 };
 
 let mongoServer = null; // Store reference to in-memory server
@@ -25,12 +24,13 @@ const connectDB = async (retries = 5) => {
   const mongoUri = (process.env.MONGO_URI || process.env.MONGODB_URI)?.trim();
 
   // Try to connect to the provided MongoDB URI first (Atlas or local)
-  // Try to connect to the provided MongoDB URI first (Atlas or local)
   if (mongoUri) {
     try {
+      const isAtlas = mongoUri.includes('+srv');
+      const options = { ...mongooseOptions, ...(isAtlas && { tls: true }) };
       const safeMongoUri = mongoUri.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@');
       console.log(`🔗 Attempting to connect to MongoDB URI: ${safeMongoUri}`);
-      const conn = await mongoose.connect(mongoUri, mongooseOptions);
+      const conn = await mongoose.connect(mongoUri, options);
       console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
       console.log(`📊 Database: ${conn.connection.name}`);
       console.log(`🔐 Connection State: Connected`);
