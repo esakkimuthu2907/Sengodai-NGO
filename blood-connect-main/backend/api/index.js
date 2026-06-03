@@ -4,7 +4,7 @@ const cors = require('cors');
 const connectDB = require('../config/db');
 
 // Load env vars
-dotenv.config();
+dotenv.config({ path: require('path').join(__dirname, '../.env') });
 
 const app = express();
 app.set('trust proxy', 1);
@@ -17,44 +17,33 @@ app.use(helmet());
 const rateLimit = require('express-rate-limit');
 const isDevOrTest = process.env.NODE_ENV !== 'production';
 
-// Enable CORS — restrict to frontend URL in production
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [
-      'https://blood-connect-frontend.vercel.app',
-      'https://frontend-jbg2msun1-esakkimuthu-s-s-projects.vercel.app',
-      'https://frontend-six-beta-otqlq2uoqr.vercel.app',
-      process.env.FRONTEND_URL
-    ].filter(Boolean)
-  : [
-      'http://localhost:8080',
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      process.env.FRONTEND_URL
-    ].filter(Boolean);
-
+// Enable CORS — allow any vercel.app origin and configured FRONTEND_URL
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else if (/^https:\/\/frontend-[a-z0-9-]+-esakkimuthu-s-s-projects\.vercel\.app$/.test(origin)) {
-      callback(null, true);
-    } else if (process.env.NODE_ENV !== 'production') {
-      // In development, allow any origin
-      callback(null, true);
-    } else {
-      // In production, reject disallowed origins
-      callback(new Error('Not allowed by CORS'));
-    }
+
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'http://127.0.0.1:5173',
+    ].filter(Boolean);
+
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow any vercel.app preview/production URL
+    if (/\.vercel\.app$/.test(origin)) return callback(null, true);
+    // Allow in development
+    if (isDevOrTest) return callback(null, true);
+
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   optionsSuccessStatus: 200
 }));
 
-// Rate Limiting - strict for auth routes
+// Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: isDevOrTest ? 1000 : 100,
@@ -83,83 +72,96 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('Blood Connect API is running...');
+  res.json({ status: 'ok', message: 'Blood Connect API is running...' });
 });
-
-app.get('/health', (req, res) => {
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Blood Connect API is healthy' });
 });
 
-// Seed default data on first request (for serverless)
+// Seed default admin + volunteer on first DB connection
 let seeded = false;
-
 const seedDatabase = async () => {
   if (seeded) return;
-  
   try {
     const mongoose = require('mongoose');
-    if (mongoose.connection.readyState === 1) {
-      const User = require('../models/User');
-      const adminExists = await User.findOne({ role: 'admin' });
-      if (!adminExists) {
-        console.log('No admin found, creating default admin...');
-        const adminEmail = process.env.ADMIN_EMAIL || 'admin@sengodai.org';
-        const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-        const adminName = process.env.ADMIN_NAME || 'Admin User';
-        const adminPhone = process.env.ADMIN_PHONE || '9876543210';
-        const adminLocation = process.env.ADMIN_LOCATION || 'Tirunelveli';
-        const adminBloodGroup = process.env.ADMIN_BLOODGROUP || 'O+';
+    if (mongoose.connection.readyState !== 1) return;
 
-        await User.create({
-          name: adminName,
-          email: adminEmail,
-          password: adminPassword,
-          role: 'admin',
-          phone: adminPhone,
-          location: adminLocation,
-          bloodGroup: adminBloodGroup
-        });
-        console.log(`Created admin: ${adminEmail}`);
-      }
+    const User = require('../models/User');
+    const bcrypt = require('bcryptjs');
 
-      const volunteerEmail = process.env.DEFAULT_VOLUNTEER_EMAIL || 'esakkimuthu2907@gmail.com';
-      const volunteerPassword = process.env.DEFAULT_VOLUNTEER_PASSWORD || 'Esakki123';
-      const volunteerExists = await User.findOne({ email: volunteerEmail });
-      if (!volunteerExists) {
-        await User.create({
-          name: 'Esakkimuthu Sengodai',
-          email: volunteerEmail,
-          password: volunteerPassword,
-          role: 'volunteer',
-          phone: '7904577032',
-          location: 'Tamil Nadu',
-          bloodGroup: 'B+',
-          status: 'Approved'
-        });
-        console.log(`Created demo volunteer: ${volunteerEmail}`);
+    // Upsert admin — ensure it always exists with correct password
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@sengodai.org';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminUser = await User.findOne({ email: adminEmail }).select('+password');
+    if (!adminUser) {
+      await User.create({
+        name: process.env.ADMIN_NAME || 'Admin User',
+        email: adminEmail,
+        password: adminPassword,
+        role: 'admin',
+        phone: process.env.ADMIN_PHONE || '9876543210',
+        location: process.env.ADMIN_LOCATION || 'Tirunelveli',
+        bloodGroup: process.env.ADMIN_BLOODGROUP || 'O+',
+        status: 'Approved'
+      });
+      console.log('Created default admin:', adminEmail);
+    } else {
+      // Always ensure password is correct (fix stale hashes)
+      const pwMatch = await bcrypt.compare(adminPassword, adminUser.password);
+      if (!pwMatch) {
+        const salt = await bcrypt.genSalt(10);
+        adminUser.password = await bcrypt.hash(adminPassword, salt);
+        await adminUser.save({ validateModifiedOnly: true });
+        console.log('Reset admin password:', adminEmail);
       }
-      seeded = true;
     }
-  } catch (seedErr) {
-    console.error('Error during seeding:', seedErr.message);
+
+    // Upsert volunteer — ensure it always exists with correct password
+    const volunteerEmail = process.env.DEFAULT_VOLUNTEER_EMAIL || 'esakkimuthu2907@gmail.com';
+    const volunteerPassword = process.env.DEFAULT_VOLUNTEER_PASSWORD || 'Esakki123';
+    const volunteerUser = await User.findOne({ email: volunteerEmail }).select('+password');
+    if (!volunteerUser) {
+      await User.create({
+        name: 'Esakkimuthu Sengodai',
+        email: volunteerEmail,
+        password: volunteerPassword,
+        role: 'volunteer',
+        phone: '7904577032',
+        location: 'Tamil Nadu',
+        bloodGroup: 'B+',
+        status: 'Approved'
+      });
+      console.log('Created default volunteer:', volunteerEmail);
+    } else {
+      // Always ensure password is correct (fix stale hashes)
+      const pwMatch = await bcrypt.compare(volunteerPassword, volunteerUser.password);
+      if (!pwMatch) {
+        const salt = await bcrypt.genSalt(10);
+        volunteerUser.password = await bcrypt.hash(volunteerPassword, salt);
+        await volunteerUser.save({ validateModifiedOnly: true });
+        console.log('Reset volunteer password:', volunteerEmail);
+      }
+    }
+
+    seeded = true;
+  } catch (err) {
+    console.error('Seed error:', err.message);
   }
 };
 
-// Ensure DB is connected before handling requests
+// Ensure DB is connected before handling any request (serverless-friendly)
 app.use(async (req, res, next) => {
   try {
     await connectDB(1);
     await seedDatabase();
-    next();
   } catch (err) {
-    console.error('DB Connection failed:', err.message);
-    res.status(500).json({ error: 'Database connection failed' });
+    console.error('DB connection error:', err.message);
   }
+  next();
 });
 
-// Mount routers after the database is ready.
+// Mount routers
 app.use('/api/auth', authLimiter, require('../routes/auth'));
 app.use('/api/users', require('../routes/users'));
 app.use('/api/requests', require('../routes/requests'));

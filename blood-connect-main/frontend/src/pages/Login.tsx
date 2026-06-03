@@ -126,7 +126,7 @@ const Login = () => {
             </div>
 
             <div className="flex justify-between items-center">
-              <Link to="#" className="text-sm text-primary font-semibold">{t("login.forgot_pass")}</Link>
+              <Link to="/forgot-password" className="text-sm text-primary font-semibold">{t("login.forgot_pass")}</Link>
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={loading}>

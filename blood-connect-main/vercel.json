@@ -6,20 +6,20 @@
       "use": "@vercel/node"
     },
     {
-      "src": "package.json",
+      "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "frontend/dist"
+        "distDir": "dist"
       }
     }
   ],
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "backend/api/index.js"
+      "destination": "/backend/api/index.js"
     },
     {
-      "source": "/((?!assets/|favicon.ico|robots.txt|placeholder.svg|sengodai-logo.png|splash-bg.png).*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

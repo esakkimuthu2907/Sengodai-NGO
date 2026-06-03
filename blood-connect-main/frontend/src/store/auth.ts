@@ -275,6 +275,33 @@ export const authStore = {
     }
   },
 
+  forgotPassword: async (email: string): Promise<{ success: boolean; error?: string; message?: string; data?: string; resetUrl?: string }> => {
+    try {
+      const res = await api.post('/auth/forgot-password', { email });
+      return { success: true, message: res.data.message, data: res.data.data, resetUrl: res.data.resetUrl };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.message || "Failed to send reset email" };
+    }
+  },
+
+  resetPassword: async (token: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await api.put(`/auth/reset-password/${token}`, { password });
+      const { token: authToken, user } = res.data;
+      localStorage.setItem("token", authToken);
+      const mappedUser = { ...user, id: user._id || user.id, status: user.status || "Pending" };
+      if (mappedUser.role === "admin") {
+        mappedUser.status = "Approved";
+      }
+      ensureNameFields(mappedUser);
+      state = { ...state, currentUser: mappedUser as User };
+      persist();
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.message || "Failed to reset password" };
+    }
+  },
+
   subscribe: (cb: () => void) => {
     listeners.add(cb);
     return () => listeners.delete(cb);

@@ -71,37 +71,24 @@ app.use(helmet());
 const rateLimit = require('express-rate-limit');
 const isDevOrTest = process.env.NODE_ENV !== 'production';
 
-// Enable CORS — restrict to frontend URL in production
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [
-      'https://blood-connect-frontend.vercel.app',
-      'https://frontend-six-beta-otqlq2uoqr.vercel.app',
-      process.env.FRONTEND_URL
-    ].filter(Boolean)
-  : [
-      'http://localhost:8080',
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      process.env.FRONTEND_URL
-    ].filter(Boolean);
-
+// Enable CORS — allow any vercel.app origin and configured FRONTEND_URL
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else if (/^https:\/\/frontend-[a-z0-9-]+-esakkimuthu-s-s-projects\.vercel\.app$/.test(origin)) {
-      callback(null, true);
-    } else if (process.env.NODE_ENV !== 'production') {
-      // In development, allow any origin
-      callback(null, true);
-    } else {
-      // In production, reject disallowed origins
-      callback(new Error('Not allowed by CORS'));
-    }
+
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'http://127.0.0.1:5173',
+    ].filter(Boolean);
+
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (/\.vercel\.app$/.test(origin)) return callback(null, true);
+    if (isDevOrTest) return callback(null, true);
+
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   optionsSuccessStatus: 200

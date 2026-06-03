@@ -196,4 +196,61 @@ router.get('/health', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/admin/db/reseed
+ * Force upsert default admin + volunteer with correct passwords
+ */
+router.post('/reseed', adminOnly, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const mongoose = require('mongoose');
+    const connectDB = require('../config/db');
+
+    // Wait for DB connection (handles cold-start serverless race condition)
+    await connectDB();
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: 'Database not connected after retry' });
+    }
+
+    // Force-update admin (delete + recreate to ensure fresh bcrypt hash)
+    await User.deleteOne({ email: 'admin@sengodai.org' });
+    const admin = await User.create({
+      name: 'Admin User',
+      email: 'admin@sengodai.org',
+      password: 'admin123',
+      role: 'admin',
+      phone: '9876543210',
+      location: 'Tirunelveli',
+      bloodGroup: 'O+',
+      status: 'Approved'
+    });
+
+    // Force-update volunteer
+    await User.deleteOne({ email: 'esakkimuthu2907@gmail.com' });
+    const volunteer = await User.create({
+      name: 'Esakkimuthu Sengodai',
+      email: 'esakkimuthu2907@gmail.com',
+      password: 'Esakki123',
+      role: 'volunteer',
+      phone: '7904577032',
+      location: 'Tamil Nadu',
+      bloodGroup: 'B+',
+      status: 'Approved'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Default users reseeded successfully',
+      users: [
+        { email: admin.email, role: admin.role, id: admin._id },
+        { email: volunteer.email, role: volunteer.role, id: volunteer._id }
+      ]
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
+

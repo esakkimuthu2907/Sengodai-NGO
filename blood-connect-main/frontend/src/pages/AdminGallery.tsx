@@ -24,7 +24,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Edit, Plus, Trash2, ImageIcon, PlayCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Upload } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import api from "@/lib/axios";
 
@@ -53,6 +54,9 @@ const AdminGallery = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchGallery = async () => {
     setLoading(true);
@@ -75,6 +79,7 @@ const AdminGallery = () => {
 
   const openNew = () => {
     setForm(emptyForm);
+    setFile(null);
     setIsNew(true);
     setEditItem(null);
     setDialogOpen(true);
@@ -88,6 +93,7 @@ const AdminGallery = () => {
       url: item.url,
       youtubeId: item.youtubeId || "",
     });
+    setFile(null);
     setIsNew(false);
     setEditItem(item);
     setDialogOpen(true);
@@ -97,23 +103,51 @@ const AdminGallery = () => {
     setForm((current) => ({ ...current, [key]: value }));
 
   const handleSave = async () => {
-    if (!form.title.trim() || !form.url.trim()) {
-      toast({ title: "Title and URL are required", variant: "destructive" });
+    setUploading(true);
+    let finalUrl = form.url;
+
+    if (file) {
+      const formData = new FormData();
+      formData.append("image", file);
+      try {
+        const res = await api.post("/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        if (res.data.success) {
+          finalUrl = res.data.data;
+        } else {
+          toast({ title: "Upload failed", variant: "destructive" });
+          setUploading(false);
+          return;
+        }
+      } catch (err: any) {
+        toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+        setUploading(false);
+        return;
+      }
+    }
+
+    if (!form.title.trim() || !finalUrl.trim()) {
+      toast({ title: "Title and file/URL are required", variant: "destructive" });
+      setUploading(false);
       return;
     }
 
     try {
+      const payload = { ...form, url: finalUrl };
       if (isNew) {
-        await api.post("/gallery", form);
+        await api.post("/gallery", payload);
         toast({ title: "Gallery item added" });
       } else if (editItem) {
-        await api.put(`/gallery/${editItem._id}`, form);
+        await api.put(`/gallery/${editItem._id}`, payload);
         toast({ title: "Gallery item updated" });
       }
       setDialogOpen(false);
       fetchGallery();
     } catch (error: any) {
       toast({ title: "Save failed", description: error.response?.data?.message || "Unable to save gallery item", variant: "destructive" });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -207,22 +241,44 @@ const AdminGallery = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>URL</Label>
-                <Input value={form.url} onChange={(e) => setField("url", e.target.value)} className="mt-2" placeholder="https://..." />
+              
+              <div className="space-y-2 mt-2">
+                <Label>Media File</Label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="file" 
+                    accept={form.mediaType === 'photo' ? "image/*" : "video/*"}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setFile(e.target.files[0]);
+                      }
+                    }}
+                    ref={fileInputRef}
+                    className="flex-1"
+                  />
+                  {form.url && !file && (
+                    <span className="text-xs text-muted-foreground truncate w-24">Current URL</span>
+                  )}
+                </div>
               </div>
             </div>
             {form.mediaType === "video" && (
               <div>
                 <Label>YouTube ID (optional)</Label>
                 <Input value={form.youtubeId} onChange={(e) => setField("youtubeId", e.target.value)} className="mt-2" placeholder="e.g. dQw4w9WgXcQ" />
-                <p className="text-xs text-muted-foreground mt-2">If provided, YouTube ID will be used to embed the video. Otherwise, the URL is treated as direct video source.</p>
+                <p className="text-xs text-muted-foreground mt-2">If provided, YouTube ID will be used to embed the video. Otherwise, the uploaded file is treated as direct video source.</p>
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{isNew ? "Create Item" : "Save Changes"}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={uploading}>Cancel</Button>
+            <Button onClick={handleSave} disabled={uploading}>
+              {uploading ? (
+                <>Uploading... <Upload className="ml-2 h-4 w-4 animate-pulse" /></>
+              ) : (
+                isNew ? "Create Item" : "Save Changes"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

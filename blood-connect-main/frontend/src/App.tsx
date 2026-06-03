@@ -11,6 +11,8 @@ import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Login from "./pages/Login.tsx";
 import Signup from "./pages/Signup.tsx";
+import Forgot from "./pages/Forgot.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import VolunteerDashboard from "./pages/VolunteerDashboard.tsx";
 import Donors from "./pages/Donors.tsx";
@@ -59,7 +61,10 @@ const App = () => {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<Forgot />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
 
             {/* Admin-only pages */}
             <Route path="/dashboard" element={<ProtectedRoute adminOnly><Dashboard /></ProtectedRoute>} />

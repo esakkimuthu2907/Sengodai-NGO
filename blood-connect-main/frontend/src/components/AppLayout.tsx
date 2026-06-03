@@ -3,7 +3,7 @@ import { Logo } from "./Logo";
 import {
   LayoutDashboard, Users, Droplet, Tent, FileText, MessageSquare,
   Settings, LogOut, Bell, Search, User, HeartHandshake, HeartPulse, UserCircle,
-  ImageIcon
+  ImageIcon, Menu
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { LucideIcon } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface NavItem {
   to: string;
@@ -107,7 +108,49 @@ export const AppLayout = ({ children, title }: { children: ReactNode; title?: st
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-40 bg-background border-b border-border">
           <div className="flex items-center gap-4 px-4 lg:px-8 h-16">
-            <div className="lg:hidden"><Logo /></div>
+            <div className="lg:hidden flex items-center gap-2">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="shrink-0">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-0 flex flex-col">
+                  <div className="px-6 py-5 border-b border-sidebar-border">
+                    <Logo />
+                  </div>
+                  <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                    {nav.map((n) => (
+                      <NavLink
+                        key={n.to}
+                        to={n.to}
+                        end={n.to === "/dashboard" || n.to === "/volunteer-dashboard"}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent/60"
+                          }`
+                        }
+                      >
+                        <n.icon className="h-4 w-4" />
+                        <span className="flex-1">{n.label}</span>
+                        {n.badge && <Badge className="bg-primary text-primary-foreground h-5 min-w-5 px-1.5">{n.badge}</Badge>}
+                      </NavLink>
+                    ))}
+                  </nav>
+                  <div className="p-3 border-t border-sidebar-border mt-auto">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 w-full"
+                    >
+                      <LogOut className="h-4 w-4" /> Logout
+                    </button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+              <Logo />
+            </div>
             <div className="flex-1 max-w-md hidden md:block">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
