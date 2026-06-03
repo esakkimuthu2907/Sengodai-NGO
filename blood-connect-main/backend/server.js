@@ -71,18 +71,18 @@ app.use(helmet());
 const rateLimit = require('express-rate-limit');
 const isDevOrTest = process.env.NODE_ENV !== 'production';
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:8080',
+  'http://127.0.0.1:5173',
+].filter(Boolean);
+
 // Enable CORS — allow any vercel.app origin and configured FRONTEND_URL
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin) return callback(null, true);
-
-    const allowedOrigins = [
-      process.env.FRONTEND_URL,
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://localhost:8080',
-      'http://127.0.0.1:5173',
-    ].filter(Boolean);
 
     if (allowedOrigins.includes(origin)) return callback(null, true);
     if (/\.vercel\.app$/.test(origin)) return callback(null, true);
