@@ -171,6 +171,7 @@ app.use('/api/dashboard', require('../routes/dashboard'));
 app.use('/api/donations', require('../routes/donations'));
 app.use('/api/contact', require('../routes/contact'));
 app.use('/api/messages', require('../routes/messages'));
+app.use('/api/notifications', require('../routes/notifications'));
 app.use('/api/gallery', require('../routes/gallery'));
 app.use('/api/announcements', require('../routes/announcements'));
 app.use('/api/admin/db', require('../routes/admin'));

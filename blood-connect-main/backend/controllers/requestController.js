@@ -44,7 +44,11 @@ exports.createRequest = async (req, res) => {
     req.body.requesterId = req.user.id;
     const request = await BloodRequest.create(req.body);
 
-    // Socket.io: Notify admins if critical
+    // Trigger modern SMS, WhatsApp, socket, and DB notifications for all blood requests
+    const { sendBloodRequestAlerts } = require('../utils/notificationService');
+    await sendBloodRequestAlerts(request, req.app);
+
+    // Socket.io: Notify admins if critical (backwards compatibility)
     if (request.urgency === 'Critical') {
       const io = req.app.get('io');
       if (io) {

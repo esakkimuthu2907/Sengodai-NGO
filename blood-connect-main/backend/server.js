@@ -136,6 +136,7 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/donations', require('./routes/donations'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/messages', require('./routes/messages'));
+app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/gallery', require('./routes/gallery'));
 app.use('/api/announcements', require('./routes/announcements'));
 app.use('/api/admin/db', require('./routes/admin')); // Database management routes
@@ -178,10 +179,18 @@ io.on('connection', (socket) => {
 // Make io accessible in controllers
 app.set('io', io);
 
-// Start server after DB connection established
-startApp().then(() => {
-  server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-}).catch(err => {
-  console.error('Failed to start application:', err.message);
-  process.exit(1);
-});
+module.exports = { app, startApp };
+
+// Start the application and listen on the configured port
+(async () => {
+  try {
+    await startApp();
+    const PORT = process.env.PORT || 5000;
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('❌ Failed to start the server:', err);
+    process.exit(1);
+  }
+})();

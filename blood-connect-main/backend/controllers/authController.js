@@ -143,12 +143,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    if (user.role !== 'admin' && user.status !== 'Approved') {
-      const message = user.status === 'Rejected'
-        ? 'Your account has been rejected by admin.'
-        : 'Your account is pending admin approval.';
-      return res.status(403).json({ success: false, message });
-    }
+
 
     if (user.role === 'admin' && user.status !== 'Approved') {
       user.status = 'Approved';

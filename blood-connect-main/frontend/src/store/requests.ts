@@ -118,15 +118,24 @@ export const requestStore = {
   getById: (id: string) => state.find((r) => r.id === id),
   add: async (req: Omit<BloodRequest, "id" | "status" | "createdAt" | "history">) => {
     try {
+      // Map frontend urgency values to backend enum values
+      const urgencyMap: Record<string, string> = {
+        Low: 'Low',
+        Medium: 'Medium',
+        High: 'High',
+        Urgent: 'Critical',  // backend uses 'Critical' not 'Urgent'
+      };
       const payload = {
         patientName: req.patient,
         bloodGroup: req.bloodGroup,
         units: req.units,
-        urgency: req.priority,
+        urgency: urgencyMap[req.priority] || 'High',
         hospitalName: req.hospital,
-        location: 'Unknown', // add mapping
-        contactName: 'Self',
+        location: (req as any).location || 'Tamil Nadu, India',
+        contactName: req.patient || 'Self',
         contactPhone: req.contact || '0000000000',
+        notes: req.notes ? `Required Date: ${(req as any).requiredDate || ''}
+${req.notes}` : `Required Date: ${(req as any).requiredDate || ''}`,
       };
       const res = await api.post('/requests', payload);
       if (res.data.success) {

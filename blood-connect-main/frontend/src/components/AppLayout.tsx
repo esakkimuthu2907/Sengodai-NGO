@@ -3,19 +3,23 @@ import { Logo } from "./Logo";
 import {
   LayoutDashboard, Users, Droplet, Tent, FileText, MessageSquare,
   Settings, LogOut, Bell, Search, User, HeartHandshake, HeartPulse, UserCircle,
-  ImageIcon, Menu
+  ImageIcon, Menu, Check, CheckCheck, Clock
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { authStore, useAuth } from "@/store/auth";
 import { LucideIcon } from "lucide-react";
-import { useSocket } from "@/hooks/useSocket";
+import { useSocket, getSocket } from "@/hooks/useSocket";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import api from "@/lib/axios";
+import { toast } from "sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NavItem {
   to: string;
@@ -65,6 +69,103 @@ export const AppLayout = ({ children, title }: { children: ReactNode; title?: st
     authStore.logout();
     navigate("/login");
   };
+
+  // Notifications logic
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Play audio chime using Web Audio API (highly robust, no external MP3 dependencies)
+  const playNotificationSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const playTone = (freq: number, time: number, duration: number) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, time);
+        gain.gain.setValueAtTime(0.15, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+        osc.start(time);
+        osc.stop(time + duration);
+      };
+      const now = audioCtx.currentTime;
+      playTone(523.25, now, 0.15); // C5
+      playTone(659.25, now + 0.1, 0.25); // E5
+    } catch (err) {
+      console.error("Failed to play notification sound", err);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get("/notifications");
+      if (res.data.success) {
+        setNotifications(res.data.data);
+        setUnreadCount(res.data.data.filter((n: any) => !n.isRead).length);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    }
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      const res = await api.put(`/notifications/${id}/read`);
+      if (res.data.success) {
+        setNotifications((prev) =>
+          prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+        );
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
+    } catch (err) {
+      console.error("Failed to mark notification as read", err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const res = await api.put("/notifications/read-all");
+      if (res.data.success) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+      }
+    } catch (err) {
+      console.error("Failed to mark all as read", err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const socketInstance = getSocket();
+    socketInstance.connect();
+
+    const handleNewAlert = (data: any) => {
+      playNotificationSound();
+      
+      const details = data.requestDetails;
+      toast.error("🩸 NEW BLOOD REQUEST!", {
+        description: `${details.patientName} needs ${details.units} units of ${details.bloodGroup} at ${details.hospitalName}. Contact: ${details.contactPhone}`,
+        duration: 8000,
+      });
+
+      // Prepend to notifications state
+      setNotifications((prev) => [data.notification, ...prev]);
+      setUnreadCount((c) => c + 1);
+    };
+
+    socketInstance.on("new_blood_request_notification", handleNewAlert);
+
+    return () => {
+      socketInstance.off("new_blood_request_notification", handleNewAlert);
+    };
+  }, []);
 
   // Connect Socket.io for real-time notifications
   useSocket(user?.bloodGroup, user?.role, user?.id);
@@ -159,12 +260,80 @@ export const AppLayout = ({ children, title }: { children: ReactNode; title?: st
             </div>
             <div className="ml-auto flex items-center gap-3">
               <LanguageSwitcher />
-              <Link to="/messages">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
-                </Button>
-              </Link>
+              {isAdmin ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="h-5 w-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center animate-pulse">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0 border border-border bg-background shadow-lg rounded-xl z-50 mr-4" align="end">
+                    <div className="p-4 border-b border-border flex items-center justify-between bg-secondary/10">
+                      <h4 className="font-bold text-sm">Notifications</h4>
+                      {unreadCount > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 text-xs text-primary font-medium hover:bg-secondary px-2 rounded"
+                          onClick={handleMarkAllAsRead}
+                        >
+                          <CheckCheck className="h-3.5 w-3.5 mr-1" /> Mark all read
+                        </Button>
+                      )}
+                    </div>
+                    <ScrollArea className="h-80">
+                      {notifications.length === 0 ? (
+                        <div className="p-8 text-center text-sm text-muted-foreground">
+                          <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
+                          No notifications yet.
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-border">
+                          {notifications.map((n) => (
+                            <div 
+                              key={n._id} 
+                              className={`p-4 transition-colors text-left flex gap-3 relative ${
+                                n.isRead ? "opacity-75 hover:bg-secondary/20" : "bg-primary-soft hover:bg-secondary/40"
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 justify-between">
+                                  <span className="font-semibold text-xs text-foreground truncate">{n.title}</span>
+                                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-3 w-3" /> {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1 leading-snug">{n.message}</p>
+                              </div>
+                              {!n.isRead && (
+                                <button 
+                                  onClick={() => handleMarkAsRead(n._id)}
+                                  className="h-6 w-6 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground flex items-center justify-center shrink-0 self-center transition-all"
+                                  title="Mark as read"
+                                >
+                                  <Check className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <Link to="/messages">
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
+                  </Button>
+                </Link>
+              )}
               <Link to="/profile" className="flex items-center gap-2">
                 <Avatar className="h-9 w-9 border-2 border-primary/20">
                   <AvatarFallback className="bg-primary text-primary-foreground text-sm">{initials}</AvatarFallback>
