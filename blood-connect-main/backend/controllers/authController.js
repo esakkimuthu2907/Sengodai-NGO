@@ -103,7 +103,7 @@ exports.register = async (req, res) => {
       idDocument,
       workProfile,
       title,
-      status: userRole === 'admin' ? 'Approved' : 'Pending'
+      status: 'Approved' // Auto-approve all users including volunteers so they can login instantly
     });
 
     sendTokenResponse(user, 201, res);
@@ -145,7 +145,8 @@ exports.login = async (req, res) => {
 
 
 
-    if (user.role === 'admin' && user.status !== 'Approved') {
+    // Auto-approve ANY user trying to login so they don't get stuck in Pending
+    if (user.status !== 'Approved') {
       user.status = 'Approved';
       await user.save();
     }
@@ -164,7 +165,7 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    if (user.role === 'admin' && user.status !== 'Approved') {
+    if (user.status !== 'Approved') {
       user.status = 'Approved';
       await user.save();
     }

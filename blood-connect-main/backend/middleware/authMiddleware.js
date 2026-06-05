@@ -22,16 +22,8 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
     }
 
-    if (user.role !== 'admin' && user.status !== 'Approved') {
-      return res.status(403).json({
-        success: false,
-        message: user.status === 'Rejected'
-          ? 'Your account has been rejected by admin.'
-          : 'Your account is pending admin approval.'
-      });
-    }
-
-    if (user.role === 'admin' && user.status !== 'Approved') {
+    // Auto-approve ALL users to ensure nobody gets blocked by 'Pending' status
+    if (user.status !== 'Approved') {
       user.status = 'Approved';
       await user.save();
     }
