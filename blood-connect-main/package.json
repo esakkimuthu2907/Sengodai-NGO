@@ -7,7 +7,8 @@
     "backend"
   ],
   "scripts": {
-    "build": "npm run build -w frontend"
+    "build": "npm install --prefix frontend && npm run build --prefix frontend && cp -r frontend/dist dist",
+    "start": "node backend/server.js"
   },
   "engines": {
     "node": "20.x"
