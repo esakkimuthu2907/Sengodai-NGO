@@ -62,8 +62,17 @@ const authLimiter = rateLimit({
 });
 app.use(limiter);
 
-// Body parser
-app.use(express.json());
+// Body parser - 50mb for base64 images
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Handle CORS preflight OPTIONS for all routes
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.sendStatus(200);
+});
 
 // Request logger
 app.use((req, res, next) => {
@@ -107,6 +116,8 @@ const seedDatabase = async () => {
 
     const User = require('../models/User');
     const bcrypt = require('bcryptjs');
+    // Force status approved for all roles
+    const forceApprove = async (user) => { if (user.status !== 'Approved') { user.status = 'Approved'; await user.save({ validateModifiedOnly: true }); } };
 
     // Upsert admin — ensure it always exists with correct password
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@sengodai.org';

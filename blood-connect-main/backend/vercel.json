@@ -6,16 +6,18 @@
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/(.*)", "destination": "/api" }
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/index.js"
+    }
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS,PATCH" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type,Authorization" },
         { "key": "Cache-Control", "value": "no-store" }
       ]
