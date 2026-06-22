@@ -1,62 +1,19 @@
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 
-// Configure Cloudinary if keys exist
-if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-  });
-}
+// Use memory storage - files are kept in buffer, not written to disk
+// This works perfectly on Vercel Serverless where disk is ephemeral
+const storage = multer.memoryStorage();
 
-// Set up storage
-let storage;
-
-if (process.env.CLOUDINARY_CLOUD_NAME) {
-  // Use Cloudinary
-  storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-      folder: 'blood-connect',
-      allowedFormats: ['jpeg', 'png', 'jpg'],
-    },
-  });
-} else {
-  // Fallback to local storage if no Cloudinary config
-  const uploadDir = process.env.VERCEL
-    ? path.join('/tmp', 'uploads')
-    : path.join(__dirname, '../uploads');
-  if (!fs.existsSync(uploadDir)){
-      fs.mkdirSync(uploadDir, { recursive: true });
-  }
-  
-  storage = multer.diskStorage({
-    destination(req, file, cb) {
-      cb(null, uploadDir);
-    },
-    filename(req, file, cb) {
-      cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
-    }
-  });
-}
-
-// Initialize multer
-const upload = multer({ 
+const upload = multer({
   storage,
-  limits: { fileSize: 5000000 }, // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: function(req, file, cb) {
-    const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-
-    if (mimetype && extname) {
+    const allowedTypes = /jpeg|jpg|png|gif|mp4|webm|webp/i;
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (mimetype) {
       return cb(null, true);
     } else {
-      cb('Error: Images Only!');
+      cb(new Error('Only image and video files are allowed'));
     }
   }
 });

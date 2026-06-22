@@ -40,6 +40,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a location']
   },
+  state: {
+    type: String,
+    trim: true
+  },
+  district: {
+    type: String,
+    trim: true
+  },
   title: {
     type: String,
     trim: true
@@ -85,6 +93,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  idDocumentNumber: {
+    type: String,
+    trim: true
+  },
+  idDocumentPhoto: {
+    type: String
+  },
   workProfile: {
     type: String,
     trim: true
@@ -98,7 +113,7 @@ const userSchema = new mongoose.Schema({
   },
   profileImage: {
     type: String,
-    default: 'default.jpg'
+    default: ''
   },
   status: {
     type: String,

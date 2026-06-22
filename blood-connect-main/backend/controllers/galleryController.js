@@ -22,14 +22,23 @@ exports.getGallery = async (req, res) => {
 exports.createGalleryItem = async (req, res) => {
   try {
     const { title, description, mediaType, url, youtubeId } = req.body;
-    if (!title || !mediaType || !url) {
-      return res.status(400).json({ success: false, message: 'Please provide title, mediaType, and url' });
+    
+    // For videos with YouTube ID, URL is optional
+    const finalUrl = url || '';
+    
+    if (!title || !mediaType) {
+      return res.status(400).json({ success: false, message: 'Please provide title and mediaType' });
     }
+    
+    if (!finalUrl && !youtubeId) {
+      return res.status(400).json({ success: false, message: 'Please provide a media file or YouTube ID' });
+    }
+    
     const item = await Gallery.create({
       title,
       description,
       mediaType,
-      url,
+      url: finalUrl,
       youtubeId
     });
     res.status(201).json({ success: true, data: item });

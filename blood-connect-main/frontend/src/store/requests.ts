@@ -51,7 +51,7 @@ async function fetchRequests() {
         hospital: r.hospitalName || 'Unknown',
         priority: r.urgency,
         patient: r.patientName,
-        age: 30,
+        age: r.age || 0,
         status: r.status,
         createdAt: r.createdAt,
         history: [],
@@ -127,6 +127,7 @@ export const requestStore = {
       };
       const payload = {
         patientName: req.patient,
+        age: req.age,
         bloodGroup: req.bloodGroup,
         units: req.units,
         urgency: urgencyMap[req.priority] || 'High',

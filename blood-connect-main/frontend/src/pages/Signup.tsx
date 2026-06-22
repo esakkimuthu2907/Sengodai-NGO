@@ -33,7 +33,8 @@ const Signup = () => {
     workProfile: "", address: "", area: "", country: "India", zipcode: "",
     phone: "", email: "", dob: "",
     password: "", confirmPassword: "",
-    role: "volunteer", adminSecret: ""
+    role: "volunteer", adminSecret: "",
+    idDocumentNumber: "", idDocumentPhoto: ""
   });
 
   const set = <K extends keyof typeof form>(key: K, value: string) =>
@@ -95,6 +96,8 @@ const Signup = () => {
         occupation: form.occupation,
         qualification: form.qualification,
         idDocument: form.idDocument,
+        idDocumentNumber: form.idDocumentNumber,
+        idDocumentPhoto: form.idDocumentPhoto,
         workProfile: form.workProfile,
         address: form.address,
         area: form.area,
@@ -274,6 +277,44 @@ const Signup = () => {
                   </Select>
                 </div>
               </div>
+              {form.idDocument && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>{form.idDocument} Number</Label>
+                    <Input
+                      value={form.idDocumentNumber}
+                      onChange={(e) => set("idDocumentNumber", e.target.value)}
+                      placeholder={`Enter ${form.idDocument} number`}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>{form.idDocument} Photo Proof</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="mt-1"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast({ title: "File too large. Max 5MB", variant: "destructive" });
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          set("idDocumentPhoto", reader.result as string);
+                          toast({ title: `${form.idDocument} photo added ✓` });
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                    {form.idDocumentPhoto && (
+                      <img src={form.idDocumentPhoto} alt="ID preview" className="mt-2 h-16 w-24 object-cover rounded border" />
+                    )}
+                  </div>
+                </div>
+              )}
               <div>
                 <Label>{t("signup.work_profile")}</Label>
                 <Input value={form.workProfile} onChange={(e) => set("workProfile", e.target.value)} placeholder={t("signup.work_profile")} className="mt-1" />

@@ -79,6 +79,24 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Blood Connect API is healthy' });
 });
 
+// Debug endpoint for database connection
+app.get('/api/debug-db', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const targetUri = req.query.uri || process.env.MONGO_URI;
+    // Force a fresh connection attempt
+    const conn = await mongoose.createConnection(targetUri, {
+      serverSelectionTimeoutMS: 5000,
+      family: 4
+    }).asPromise();
+    await conn.close();
+    res.json({status: 'ok', uri: targetUri.replace(/:([^:@]+)@/, ':***@')});
+  } catch(e) {
+    const targetUri = req.query.uri || process.env.MONGO_URI;
+    res.json({error: e.message, code: e.code, name: e.name, uri: targetUri ? targetUri.replace(/:([^:@]+)@/, ':***@') : 'missing'});
+  }
+});
+
 // Seed default admin + volunteer on first DB connection
 let seeded = false;
 const seedDatabase = async () => {
@@ -153,12 +171,17 @@ const seedDatabase = async () => {
 // Ensure DB is connected before handling any request (serverless-friendly)
 app.use(async (req, res, next) => {
   try {
-    await connectDB(1);
+    await connectDB();
     await seedDatabase();
+    next();
   } catch (err) {
     console.error('DB connection error:', err.message);
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection failed. Please ensure MongoDB Atlas IP whitelist includes 0.0.0.0/0.',
+      error: err.message
+    });
   }
-  next();
 });
 
 // Mount routers

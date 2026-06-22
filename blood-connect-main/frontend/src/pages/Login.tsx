@@ -138,17 +138,7 @@ const Login = () => {
               <Link to="/signup" className="text-primary font-semibold">{t("login.signup")}</Link>
             </p>
 
-            {loginAs === "volunteer" && (
-              <div className="p-3 rounded-lg bg-secondary/60 text-xs text-muted-foreground text-center">
-                <strong>{t("login.demo_volunteer")}</strong> esakkimuthu2907@gmail.com / Esakki123
-              </div>
-            )}
 
-            {loginAs === "admin" && (
-              <div className="p-3 rounded-lg bg-secondary/60 text-xs text-muted-foreground text-center">
-                <strong>{t("login.demo_admin")}</strong> admin@sengodai.org / admin123
-              </div>
-            )}
           </form>
         </Card>
       </div>

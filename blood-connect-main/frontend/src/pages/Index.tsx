@@ -2,8 +2,11 @@ import { PublicHeader, PublicFooter } from "@/components/PublicHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { Users, Droplet, HeartPulse, Building2, ImageIcon, PlayCircle } from "lucide-react";
+import { Users, Droplet, HeartPulse, Building2, ImageIcon, PlayCircle, AlertTriangle, Phone, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "@/lib/axios";
 import { useAuth } from "@/store/auth";
@@ -19,11 +22,28 @@ type GalleryItem = {
   youtubeId?: string;
 };
 
+const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
 const Landing = () => {
   const { t } = useTranslation();
   const auth = useAuth();
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [galleryLoading, setGalleryLoading] = useState(false);
+
+  // Emergency form state
+  const [emergencyForm, setEmergencyForm] = useState({
+    patientName: '',
+    age: '',
+    bloodGroup: '',
+    units: '1',
+    hospitalName: '',
+    location: '',
+    contactPhone: '',
+    urgency: 'High',
+  });
+  const [emergencySubmitting, setEmergencySubmitting] = useState(false);
+  const [emergencySuccess, setEmergencySuccess] = useState<string | null>(null);
+  const [emergencyError, setEmergencyError] = useState<string | null>(null);
 
   const stats = [
     { icon: Users, value: "0", label: t("index.stats_donors") },
@@ -48,6 +68,36 @@ const Landing = () => {
     };
     loadGallery();
   }, []);
+
+  const handleEmergencySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmergencyError(null);
+    setEmergencySuccess(null);
+
+    const { patientName, age, bloodGroup, units, hospitalName, location, contactPhone } = emergencyForm;
+    if (!patientName || !bloodGroup || !units || !hospitalName || !location || !contactPhone) {
+      setEmergencyError('Please fill all required fields.');
+      return;
+    }
+
+    setEmergencySubmitting(true);
+    try {
+      const res = await api.post('/requests/emergency', emergencyForm);
+      if (res.data.success) {
+        setEmergencySuccess(`✅ Request #${res.data.requestId} submitted! Admins notified via WhatsApp & SMS.`);
+        setEmergencyForm({ patientName: '', age: '', bloodGroup: '', units: '1', hospitalName: '', location: '', contactPhone: '', urgency: 'High' });
+      } else {
+        setEmergencyError(res.data.message || 'Submission failed. Please try again.');
+      }
+    } catch (err: any) {
+      setEmergencyError(err.response?.data?.message || 'Submission failed. Please try again.');
+    } finally {
+      setEmergencySubmitting(false);
+    }
+  };
+
+  const setField = (key: keyof typeof emergencyForm, value: string) =>
+    setEmergencyForm(f => ({ ...f, [key]: value }));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -93,6 +143,132 @@ const Landing = () => {
                 </div>
               </Card>
             ))}
+          </div>
+        </section>
+
+        {/* 🚨 Emergency Blood Request Section */}
+        <section className="container py-16">
+          <div className="rounded-2xl border-2 border-red-500/40 bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 p-8 shadow-lg">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-xl bg-red-500 flex items-center justify-center animate-pulse">
+                <AlertTriangle className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-extrabold text-red-600 dark:text-red-400">Emergency Blood Request</h2>
+                <p className="text-sm text-muted-foreground">No login needed — Admins are instantly notified via WhatsApp & SMS</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mb-6 text-xs text-muted-foreground">
+              <Phone className="h-3.5 w-3.5 text-green-600" />
+              <span>Alerts sent to <strong>+91 7904577032</strong> & <strong>+91 9894955401</strong> immediately</span>
+            </div>
+
+            {emergencySuccess && (
+              <div className="mb-4 flex items-start gap-2 rounded-lg bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 p-4 text-green-800 dark:text-green-300 text-sm">
+                <CheckCircle2 className="h-5 w-5 mt-0.5 shrink-0" />
+                <span>{emergencySuccess}</span>
+              </div>
+            )}
+
+            {emergencyError && (
+              <div className="mb-4 rounded-lg bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 p-3 text-red-700 dark:text-red-400 text-sm">
+                {emergencyError}
+              </div>
+            )}
+
+            <form onSubmit={handleEmergencySubmit} className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-xs font-semibold">Patient Name <span className="text-red-500">*</span></Label>
+                <Input
+                  className="mt-1"
+                  placeholder="e.g. Ramesh Kumar"
+                  value={emergencyForm.patientName}
+                  onChange={e => setField('patientName', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Patient Age</Label>
+                <Input
+                  type="number"
+                  className="mt-1"
+                  placeholder="e.g. 35"
+                  value={emergencyForm.age}
+                  onChange={e => setField('age', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Blood Group <span className="text-red-500">*</span></Label>
+                <Select value={emergencyForm.bloodGroup} onValueChange={v => setField('bloodGroup', v)}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select blood group" /></SelectTrigger>
+                  <SelectContent>
+                    {BLOOD_GROUPS.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Units Needed <span className="text-red-500">*</span></Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  className="mt-1"
+                  placeholder="2"
+                  value={emergencyForm.units}
+                  onChange={e => setField('units', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Hospital Name <span className="text-red-500">*</span></Label>
+                <Input
+                  className="mt-1"
+                  placeholder="e.g. Government Hospital"
+                  value={emergencyForm.hospitalName}
+                  onChange={e => setField('hospitalName', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Location / City <span className="text-red-500">*</span></Label>
+                <Input
+                  className="mt-1"
+                  placeholder="e.g. Tirunelveli"
+                  value={emergencyForm.location}
+                  onChange={e => setField('location', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Contact Phone <span className="text-red-500">*</span></Label>
+                <Input
+                  className="mt-1"
+                  placeholder="e.g. 9876543210"
+                  value={emergencyForm.contactPhone}
+                  onChange={e => setField('contactPhone', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Urgency Level</Label>
+                <Select value={emergencyForm.urgency} onValueChange={v => setField('urgency', v)}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {['Low','Medium','High','Critical'].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2 lg:col-span-2 flex items-end">
+                <Button
+                  type="submit"
+                  disabled={emergencySubmitting}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-base py-6 shadow-lg"
+                  size="lg"
+                >
+                  {emergencySubmitting ? (
+                    <span className="flex items-center gap-2"><span className="animate-spin">⏳</span> Submitting...</span>
+                  ) : (
+                    <span className="flex items-center gap-2"><AlertTriangle className="h-5 w-5" /> Send Emergency Request</span>
+                  )}
+                </Button>
+              </div>
+            </form>
           </div>
         </section>
 

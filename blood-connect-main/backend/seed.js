@@ -56,7 +56,16 @@ const seedData = async () => {
         role: 'user',
         phone: '9876500002',
         location: 'Chennai',
-        bloodGroup: 'A+'
+        bloodGroup: 'A+',
+      },
+      {
+        name: 'Esakki Kumar',
+        email: 'esakkimuthu2907@gmail.com',
+        password: 'Esakki123',
+        role: 'user',
+        phone: '9876500010',
+        location: 'Tirunelveli',
+        bloodGroup: 'O+'
       }
     ]);
 

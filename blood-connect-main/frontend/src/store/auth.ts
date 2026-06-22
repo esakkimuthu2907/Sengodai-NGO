@@ -18,6 +18,12 @@ export type User = {
   occupation: string;
   qualification: string;
   idDocument: string;
+  idDocumentNumber: string;
+  idDocumentPhoto: string;
+  profileImage: string;
+  lastDonationDate: string;
+  isAvailableForDonation: boolean;
+  location: string;
   workProfile: string;
   address: string;
   area: string;
@@ -53,6 +59,12 @@ const defaultAdmin: User = {
   occupation: "Administrator",
   qualification: "Post Graduate",
   idDocument: "Aadhaar",
+  idDocumentNumber: "",
+  idDocumentPhoto: "",
+  profileImage: "",
+  lastDonationDate: "",
+  isAvailableForDonation: true,
+  location: "",
   workProfile: "",
   address: "Sengodai Blood Foundation, Tirunelveli",
   area: "Main Road",
@@ -157,6 +169,8 @@ export const authStore = {
         bloodGroup: userData.bloodGroup,
         phone: userData.phone,
         location: `${userData.address || userData.city || ''} ${userData.state || ''}`.trim() || 'Unknown',
+        state: userData.state,
+        district: userData.district,
         address: userData.address,
         area: userData.area,
         country: userData.country,
@@ -166,6 +180,10 @@ export const authStore = {
         occupation: userData.occupation,
         qualification: userData.qualification,
         idDocument: userData.idDocument,
+        idDocumentNumber: userData.idDocumentNumber,
+        idDocumentPhoto: userData.idDocumentPhoto,
+        profileImage: userData.profileImage,
+        lastDonationDate: userData.lastDonationDate,
         workProfile: userData.workProfile,
         title: userData.title
       };
@@ -213,6 +231,30 @@ export const authStore = {
       return false;
     } catch (e) {
       console.error("Failed to update user", e);
+      return false;
+    }
+  },
+
+  updateProfile: async (data: Partial<User>): Promise<boolean> => {
+    try {
+      const payload = { ...data } as any;
+      if (data.firstName || data.lastName) {
+        payload.name = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+      }
+      const res = await api.put('/auth/update-profile', payload);
+      if (res.data.success) {
+        const updatedUser = { ...res.data.user, id: res.data.user._id || res.data.user.id };
+        ensureNameFields(updatedUser);
+        state = {
+          ...state,
+          currentUser: updatedUser as User,
+        };
+        persist();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Failed to update profile", e);
       return false;
     }
   },

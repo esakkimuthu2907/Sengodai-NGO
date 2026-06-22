@@ -10,6 +10,10 @@ const requestSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add the patient name']
   },
+  age: {
+    type: Number,
+    required: [false, 'Please add the patient age']
+  },
   bloodGroup: {
     type: String,
     enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],

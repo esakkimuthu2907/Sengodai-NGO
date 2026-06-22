@@ -3,25 +3,25 @@ const router = express.Router();
 const upload = require('../config/upload');
 
 // @route   POST /api/upload
-// @desc    Upload an image
-// @access  Public (or protected if you want)
+// @desc    Upload an image/video and return Base64 data URI
+// @access  Public
 router.post('/', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'Please upload a file' });
   }
 
-  // If using Cloudinary, path is in req.file.path. If local, it's also req.file.path but we return the relative path
-  let imageUrl = req.file.path;
-  
-  if (!process.env.CLOUDINARY_CLOUD_NAME) {
-    // Local fallback formatting
-    imageUrl = `/uploads/${req.file.filename}`;
-  }
+  try {
+    // Convert buffer to Base64 data URI
+    const base64 = req.file.buffer.toString('base64');
+    const dataUri = `data:${req.file.mimetype};base64,${base64}`;
 
-  res.status(200).json({
-    success: true,
-    data: imageUrl
-  });
+    res.status(200).json({
+      success: true,
+      data: dataUri
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Upload processing failed' });
+  }
 });
 
 module.exports = router;

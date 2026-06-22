@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const sendTokenResponse = (user, statusCode, res) => {
   // Create token
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
+    expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 
   if (user.role === 'admin') {
@@ -23,6 +23,8 @@ const sendTokenResponse = (user, statusCode, res) => {
       role: user.role,
       bloodGroup: user.bloodGroup,
       location: user.location,
+      state: user.state,
+      district: user.district,
       phone: user.phone,
       status: user.status || 'Pending',
       title: user.title,
@@ -36,6 +38,11 @@ const sendTokenResponse = (user, statusCode, res) => {
       occupation: user.occupation,
       qualification: user.qualification,
       idDocument: user.idDocument,
+      idDocumentNumber: user.idDocumentNumber,
+      idDocumentPhoto: user.idDocumentPhoto,
+      profileImage: user.profileImage,
+      lastDonationDate: user.lastDonationDate,
+      isAvailableForDonation: user.isAvailableForDonation,
       workProfile: user.workProfile,
       createdAt: user.createdAt
     }
@@ -56,6 +63,8 @@ exports.register = async (req, res) => {
       bloodGroup,
       phone,
       location,
+      state,
+      district,
       address,
       area,
       country,
@@ -65,6 +74,10 @@ exports.register = async (req, res) => {
       occupation,
       qualification,
       idDocument,
+      idDocumentNumber,
+      idDocumentPhoto,
+      profileImage,
+      lastDonationDate,
       workProfile,
       title
     } = req.body;
@@ -92,6 +105,8 @@ exports.register = async (req, res) => {
       bloodGroup,
       phone,
       location: userLocation,
+      state,
+      district,
       address,
       area,
       country,
@@ -101,6 +116,10 @@ exports.register = async (req, res) => {
       occupation,
       qualification,
       idDocument,
+      idDocumentNumber,
+      idDocumentPhoto,
+      profileImage,
+      lastDonationDate,
       workProfile,
       title,
       status: 'Approved' // Auto-approve all users including volunteers so they can login instantly
@@ -172,6 +191,70 @@ exports.getMe = async (req, res) => {
     res.status(200).json({
       success: true,
       data: user
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Update current user profile (self-update)
+// @route   PUT /api/auth/update-profile
+// @access  Private
+exports.updateProfile = async (req, res) => {
+  try {
+    const fieldsToUpdate = [
+      'name', 'phone', 'bloodGroup', 'location', 'state', 'district',
+      'address', 'area', 'country', 'zipcode', 'dob', 'gender',
+      'occupation', 'qualification', 'idDocument', 'idDocumentNumber',
+      'idDocumentPhoto', 'workProfile', 'title', 'profileImage',
+      'lastDonationDate', 'isAvailableForDonation'
+    ];
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    fieldsToUpdate.forEach(field => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        bloodGroup: user.bloodGroup,
+        location: user.location,
+        state: user.state,
+        district: user.district,
+        phone: user.phone,
+        status: user.status || 'Pending',
+        title: user.title,
+        address: user.address,
+        area: user.area,
+        country: user.country,
+        zipcode: user.zipcode,
+        dob: user.dob,
+        age: user.age,
+        gender: user.gender,
+        occupation: user.occupation,
+        qualification: user.qualification,
+        idDocument: user.idDocument,
+        idDocumentNumber: user.idDocumentNumber,
+        idDocumentPhoto: user.idDocumentPhoto,
+        workProfile: user.workProfile,
+        profileImage: user.profileImage,
+        lastDonationDate: user.lastDonationDate,
+        isAvailableForDonation: user.isAvailableForDonation,
+        createdAt: user.createdAt
+      }
     });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

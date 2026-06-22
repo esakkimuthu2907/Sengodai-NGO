@@ -2,7 +2,7 @@ export type Donor = {
   id: string; name: string; bloodGroup: string; distance: string;
   available: boolean; phone: string; location: string; age: number;
   gender: string; lastDonation: string; weight: string; occupation: string;
-  email: string; address: string;
+  email: string; address: string; state?: string; district?: string;
 };
 
 export const donors: Donor[] = [

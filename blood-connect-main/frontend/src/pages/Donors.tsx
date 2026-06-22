@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { useDonors } from "@/store/donors";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { states, districts } from "@/data/tamilnadu";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -17,29 +18,41 @@ const Donors = () => {
   const { t } = useTranslation();
   const donors = useDonors();
   const [bg, setBg] = useState("All");
+  const [stateFilter, setStateFilter] = useState("All");
+  const [districtFilter, setDistrictFilter] = useState("All");
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
     return donors.filter((d) => {
       const matchBg = bg === "All" || d.bloodGroup === bg;
+      const matchState = stateFilter === "All" || d.state === stateFilter || (!d.state && d.location?.includes(stateFilter));
+      const matchDistrict = districtFilter === "All" || d.district === districtFilter || (!d.district && d.location?.includes(districtFilter));
       const matchQ = !q || d.name.toLowerCase().includes(q.toLowerCase()) || d.location.toLowerCase().includes(q.toLowerCase());
-      return matchBg && matchQ;
+      return matchBg && matchState && matchDistrict && matchQ;
     });
-  }, [donors, bg, q]);
+  }, [donors, bg, stateFilter, districtFilter, q]);
 
   return (
     <AppLayout title={t("donors.page_title")}>
       <p className="text-sm text-muted-foreground -mt-4 mb-6">{t("donors.subtitle")}</p>
       <Card className="p-6 border-0 shadow-card">
-        <div className="grid md:grid-cols-4 gap-3">
+        <div className="grid md:grid-cols-5 gap-3">
           <Select value={bg} onValueChange={setBg}>
             <SelectTrigger><SelectValue placeholder={t("donors.blood_group")} /></SelectTrigger>
             <SelectContent>{["All", ...bloodGroups].map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
           </Select>
-          <Input placeholder={t("donors.search_ph")} value={q} onChange={(e) => setQ(e.target.value)} />
-          <Select><SelectTrigger><SelectValue placeholder={t("donors.distance")} /></SelectTrigger>
-            <SelectContent>{["5 km", "10 km", "25 km", "50 km"].map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+          <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setDistrictFilter("All"); }}>
+            <SelectTrigger><SelectValue placeholder="State" /></SelectTrigger>
+            <SelectContent>{["All", ...states].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
           </Select>
+          <Select value={districtFilter} onValueChange={setDistrictFilter} disabled={stateFilter === "All"}>
+            <SelectTrigger><SelectValue placeholder="District" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Districts</SelectItem>
+              {stateFilter !== "All" && (districts[stateFilter] || []).map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input placeholder={t("donors.search_ph")} value={q} onChange={(e) => setQ(e.target.value)} />
           <Button><Search className="h-4 w-4 mr-2" />{t("donors.search_btn")}</Button>
         </div>
       </Card>
@@ -57,7 +70,9 @@ const Donors = () => {
               <Badge className="absolute -top-1 -right-1 bg-primary">{d.bloodGroup}</Badge>
             </div>
             <Link to={`/donors/${d.id}`} className="block mt-3 font-bold hover:text-primary">{d.name}</Link>
-            <div className="text-xs text-muted-foreground mt-1">{d.distance}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {d.district && d.state ? `${d.district}, ${d.state}` : d.location}
+            </div>
             <div className="flex items-center justify-center gap-1 text-xs mt-2">
               <span className={`h-2 w-2 rounded-full ${d.available ? "bg-success" : "bg-muted-foreground"}`} />
               {d.available ? t("donors.available") : t("donors.unavailable")}

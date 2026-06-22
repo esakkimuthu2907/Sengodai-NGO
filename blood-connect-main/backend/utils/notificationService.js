@@ -2,11 +2,11 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { sendTwilioMessage } = require('./twilioClient');
 
-// Hardcoded admin phone – always +917904577032 as required
-const ADMIN_PHONE = '+917904577032';
+// All phones that receive blood request alerts
+const ALERT_PHONES = ['+917904577032', '+919894955401'];
 
 /**
- * Send SMS notification to the Admin.
+ * Send SMS notification to all alert phones.
  */
 async function sendSMSAlert(request) {
   const message =
@@ -20,12 +20,18 @@ Urgency: ${request.urgency || 'High'}
 Request ID: #${request._id.toString().slice(-6)}
 Please act immediately!`;
 
-  console.log(`📱 Sending SMS to ${ADMIN_PHONE}...`);
-  await sendTwilioMessage(ADMIN_PHONE, message, false);
+  for (const phone of ALERT_PHONES) {
+    try {
+      console.log(`📱 Sending SMS to ${phone}...`);
+      await sendTwilioMessage(phone, message, false);
+    } catch (err) {
+      console.error(`❌ SMS failed for ${phone}:`, err.message);
+    }
+  }
 }
 
 /**
- * Send WhatsApp notification to the Admin.
+ * Send WhatsApp notification to all alert phones.
  */
 async function sendWhatsAppAlert(request) {
   const date = new Date(request.createdAt || Date.now()).toLocaleString('en-IN', {
@@ -48,8 +54,14 @@ async function sendWhatsAppAlert(request) {
 
 Please respond immediately on BloodConnect! 🏥`;
 
-  console.log(`📲 Sending WhatsApp to ${ADMIN_PHONE}...`);
-  await sendTwilioMessage(ADMIN_PHONE, message, true);
+  for (const phone of ALERT_PHONES) {
+    try {
+      console.log(`📲 Sending WhatsApp to ${phone}...`);
+      await sendTwilioMessage(phone, message, true);
+    } catch (err) {
+      console.error(`❌ WhatsApp failed for ${phone}:`, err.message);
+    }
+  }
 }
 
 /**
@@ -59,13 +71,13 @@ async function sendBloodRequestAlerts(request, app) {
   try {
     console.log('🔔 Dispatching blood request alerts...');
 
-    // 1. Send WhatsApp Alert to admin
+    // 1. Send WhatsApp Alert to all phones
     await sendWhatsAppAlert(request);
 
-    // 2. Send SMS Alert to admin
+    // 2. Send SMS Alert to all phones
     await sendSMSAlert(request);
 
-    console.log('✅ WhatsApp + SMS alerts dispatched to', ADMIN_PHONE);
+    console.log('✅ WhatsApp + SMS alerts dispatched to', ALERT_PHONES.join(', '));
 
     // 3. Save Notification in the Database
     const admin = await User.findOne({ role: 'admin' }).sort({ createdAt: 1 });
