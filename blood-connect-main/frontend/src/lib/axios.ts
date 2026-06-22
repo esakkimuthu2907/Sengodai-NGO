@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const rawApiUrl =
   import.meta.env.VITE_API_URL || 
-  (typeof window !== 'undefined' ? `${window.location.origin}/api` : '/api');
+  'https://blood-connect-backend-ten.vercel.app/api';
 
 const normalizedApiUrl = rawApiUrl.replace(/\/$/, '');
 const baseURL = normalizedApiUrl.endsWith('/api')
