@@ -110,9 +110,7 @@ const AdminGallery = () => {
       const formData = new FormData();
       formData.append("image", file);
       try {
-        const res = await api.post("/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const res = await api.post("/upload", formData);
         if (res.data.success) {
           finalUrl = res.data.data;
         } else {
