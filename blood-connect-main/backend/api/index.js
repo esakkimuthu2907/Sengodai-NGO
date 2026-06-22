@@ -125,11 +125,10 @@ const seedDatabase = async () => {
       });
       console.log('Created default admin:', adminEmail);
     } else {
-      // Always ensure password is correct (fix stale hashes)
       const pwMatch = await bcrypt.compare(adminPassword, adminUser.password);
       if (!pwMatch) {
-        const salt = await bcrypt.genSalt(10);
-        adminUser.password = await bcrypt.hash(adminPassword, salt);
+        // Just set the password, the pre-save hook will hash it automatically
+        adminUser.password = adminPassword;
         await adminUser.save({ validateModifiedOnly: true });
         console.log('Reset admin password:', adminEmail);
       }
@@ -152,11 +151,10 @@ const seedDatabase = async () => {
       });
       console.log('Created default volunteer:', volunteerEmail);
     } else {
-      // Always ensure password is correct (fix stale hashes)
       const pwMatch = await bcrypt.compare(volunteerPassword, volunteerUser.password);
       if (!pwMatch) {
-        const salt = await bcrypt.genSalt(10);
-        volunteerUser.password = await bcrypt.hash(volunteerPassword, salt);
+        // Just set the password, the pre-save hook will hash it automatically
+        volunteerUser.password = volunteerPassword;
         await volunteerUser.save({ validateModifiedOnly: true });
         console.log('Reset volunteer password:', volunteerEmail);
       }
