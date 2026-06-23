@@ -147,8 +147,8 @@ export const authStore = {
         const response = await api.post("/auth/login", payload);
         const { token, user } = response.data;
         localStorage.setItem("token", token);
-        const mappedUser = { ...user, id: user._id || user.id, status: user.status || "Approved" };
-        if (mappedUser.role === "admin" || mappedUser.role === "volunteer") {
+        const mappedUser = { ...user, id: user._id || user.id, status: user.status || "Pending" };
+        if (mappedUser.role === "admin") {
           mappedUser.status = "Approved";
         }
         ensureNameFields(mappedUser);

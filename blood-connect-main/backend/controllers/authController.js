@@ -122,7 +122,7 @@ exports.register = async (req, res) => {
       lastDonationDate,
       workProfile,
       title,
-      status: 'Approved' // Auto-approve all users including volunteers so they can login instantly
+      status: userRole === 'admin' ? 'Approved' : 'Pending'
     });
 
     sendTokenResponse(user, 201, res);
@@ -160,14 +160,6 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       console.log('Password mismatch');
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
-    }
-
-
-
-    // Auto-approve ANY user trying to login so they don't get stuck in Pending
-    if (user.status !== 'Approved') {
-      user.status = 'Approved';
-      await user.save();
     }
 
     console.log('Login successful');
