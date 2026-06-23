@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { Users, Droplet, HeartPulse, Building2, ImageIcon, PlayCircle, AlertTriangle, Phone, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -323,37 +324,68 @@ const Landing = () => {
           ) : galleryItems.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">{t("index.no_photos")}</div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {galleryItems.map((item) => (
-                <Card key={item._id} className="overflow-hidden border-0 shadow-card">
-                  <div className="relative bg-black/5">
-                    {item.mediaType === 'photo' ? (
-                      <img src={item.url} alt={item.title} className="h-64 w-full object-cover" />
-                    ) : item.youtubeId ? (
-                      <div className="relative aspect-video w-full">
-                        <iframe
-                          className="h-full w-full"
-                          src={`https://www.youtube.com/embed/${item.youtubeId}`}
-                          title={item.title}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
-                    ) : (
-                      <video className="h-64 w-full object-cover" controls src={item.url} />
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary font-semibold mb-3">
-                      {item.mediaType === 'photo' ? <ImageIcon className="h-4 w-4" /> : <PlayCircle className="h-4 w-4" />} 
-                      {item.mediaType}
-                    </div>
-                    <h3 className="text-lg font-semibold">{item.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{item.description || 'No description available.'}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
+            <Tabs defaultValue="photos" className="w-full">
+              <div className="flex justify-center mb-8">
+                <TabsList className="grid w-full max-w-md grid-cols-2">
+                  <TabsTrigger value="photos" className="font-semibold flex gap-2 items-center">
+                    <ImageIcon className="h-4 w-4" /> Photos
+                  </TabsTrigger>
+                  <TabsTrigger value="videos" className="font-semibold flex gap-2 items-center">
+                    <PlayCircle className="h-4 w-4" /> Videos
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <TabsContent value="photos" className="mt-0">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {galleryItems.filter(item => item.mediaType === 'photo').length === 0 ? (
+                    <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">No photos available.</div>
+                  ) : (
+                    galleryItems.filter(item => item.mediaType === 'photo').map((item) => (
+                      <Card key={item._id} className="overflow-hidden border-0 shadow-card">
+                        <div className="relative bg-black/5 aspect-square">
+                          <img src={item.url} alt={item.title} className="h-full w-full object-cover" />
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-semibold truncate">{item.title}</h3>
+                          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{item.description || 'No description available.'}</p>
+                        </div>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="videos" className="mt-0">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {galleryItems.filter(item => item.mediaType === 'video').length === 0 ? (
+                    <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">No videos available.</div>
+                  ) : (
+                    galleryItems.filter(item => item.mediaType === 'video').map((item) => (
+                      <Card key={item._id} className="overflow-hidden border-0 shadow-card">
+                        <div className="relative bg-black/5 aspect-video w-full">
+                          {item.youtubeId ? (
+                            <iframe
+                              className="h-full w-full absolute inset-0"
+                              src={`https://www.youtube.com/embed/${item.youtubeId}`}
+                              title={item.title}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          ) : (
+                            <video className="h-full w-full object-cover absolute inset-0" controls src={item.url} />
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-semibold truncate">{item.title}</h3>
+                          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{item.description || 'No description available.'}</p>
+                        </div>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
         </section>
       </main>

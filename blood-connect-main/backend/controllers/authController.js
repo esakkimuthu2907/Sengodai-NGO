@@ -207,7 +207,7 @@ exports.updateProfile = async (req, res) => {
       'address', 'area', 'country', 'zipcode', 'dob', 'gender',
       'occupation', 'qualification', 'idDocument', 'idDocumentNumber',
       'idDocumentPhoto', 'workProfile', 'title', 'profileImage',
-      'lastDonationDate', 'isAvailableForDonation'
+      'lastDonationDate', 'isAvailableForDonation', 'password'
     ];
 
     const user = await User.findById(req.user.id);

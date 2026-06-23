@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, Plus, Trash2, ImageIcon, PlayCircle } from "lucide-react";
 import { Upload } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
@@ -176,40 +177,86 @@ const AdminGallery = () => {
         ) : items.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">No gallery items yet. Add a photo or video to display on home page.</div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) => (
-              <div key={item._id} className="rounded-3xl overflow-hidden border border-border bg-background shadow-sm">
-                <div className="relative bg-black/5">
-                  {item.mediaType === "photo" ? (
-                    <img src={item.url} alt={item.title} className="h-56 w-full object-cover" />
-                  ) : item.youtubeId ? (
-                    <iframe
-                      className="h-56 w-full"
-                      src={`https://www.youtube.com/embed/${item.youtubeId}`}
-                      title={item.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  ) : (
-                    <video className="h-56 w-full object-cover" controls src={item.url} />
-                  )}
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <div>
-                      <p className="text-sm uppercase tracking-[0.2em] text-primary font-bold">{item.mediaType}</p>
+          <Tabs defaultValue="photos" className="w-full">
+            <div className="flex justify-center mb-6">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="photos" className="font-semibold flex gap-2 items-center">
+                  <ImageIcon className="h-4 w-4" /> Photos
+                </TabsTrigger>
+                <TabsTrigger value="videos" className="font-semibold flex gap-2 items-center">
+                  <PlayCircle className="h-4 w-4" /> Videos
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="photos" className="mt-0">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {items.filter(item => item.mediaType === 'photo').length === 0 ? (
+                  <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">No photos in gallery.</div>
+                ) : (
+                  items.filter(item => item.mediaType === 'photo').map((item) => (
+                    <div key={item._id} className="rounded-3xl overflow-hidden border border-border bg-background shadow-sm">
+                      <div className="relative bg-black/5 aspect-square">
+                        <img src={item.url} alt={item.title} className="h-full w-full object-cover" />
+                      </div>
+                      <div className="p-5">
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <div>
+                            <p className="text-sm uppercase tracking-[0.2em] text-primary font-bold">{item.mediaType}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => openEdit(item)}><Edit className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteId(item._id)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </div>
+                        <h3 className="text-lg font-semibold truncate">{item.title}</h3>
+                        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{item.description || "No description provided."}</p>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => openEdit(item)}><Edit className="h-4 w-4" /></Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteId(item._id)}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-semibold">{item.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{item.description || "No description provided."}</p>
-                </div>
+                  ))
+                )}
               </div>
-            ))}
-          </div>
+            </TabsContent>
+
+            <TabsContent value="videos" className="mt-0">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {items.filter(item => item.mediaType === 'video').length === 0 ? (
+                  <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">No videos in gallery.</div>
+                ) : (
+                  items.filter(item => item.mediaType === 'video').map((item) => (
+                    <div key={item._id} className="rounded-3xl overflow-hidden border border-border bg-background shadow-sm">
+                      <div className="relative bg-black/5 aspect-video w-full">
+                        {item.youtubeId ? (
+                          <iframe
+                            className="h-full w-full absolute inset-0"
+                            src={`https://www.youtube.com/embed/${item.youtubeId}`}
+                            title={item.title}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        ) : (
+                          <video className="h-full w-full object-cover absolute inset-0" controls src={item.url} />
+                        )}
+                      </div>
+                      <div className="p-5">
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <div>
+                            <p className="text-sm uppercase tracking-[0.2em] text-primary font-bold">{item.mediaType}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => openEdit(item)}><Edit className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteId(item._id)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </div>
+                        <h3 className="text-lg font-semibold truncate">{item.title}</h3>
+                        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{item.description || "No description provided."}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         )}
       </Card>
 

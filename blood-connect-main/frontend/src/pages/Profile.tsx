@@ -134,6 +134,9 @@ const Profile = () => {
         gender: form.gender,
         dob: form.dob || undefined,
       };
+      if (form.password) {
+        updatedData.password = form.password;
+      }
       const success = await authStore.updateProfile(updatedData);
       if (success) {
         toast({ title: "Profile updated successfully ✓" });
@@ -517,6 +520,11 @@ const Profile = () => {
               </Label>
               <Input type="date" value={form.lastDonationDate} onChange={(e) => setForm({ ...form, lastDonationDate: e.target.value })} className="mt-2" />
               <p className="text-xs text-muted-foreground mt-1">The system will automatically calculate your next eligible donation date (90 days).</p>
+            </div>
+            <div className="border-t border-border pt-3 mt-3">
+              <Label className="font-semibold text-primary">Change Password (Optional)</Label>
+              <Input type="password" value={form.password || ""} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Enter new password to change" className="mt-1" />
+              <p className="text-xs text-muted-foreground mt-1">Leave blank if you do not want to change your password.</p>
             </div>
           </div>
           <DialogFooter className="mt-4">
