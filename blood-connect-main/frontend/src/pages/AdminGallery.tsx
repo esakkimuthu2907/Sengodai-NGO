@@ -108,26 +108,30 @@ const AdminGallery = () => {
     let finalUrl = form.url;
 
     if (file) {
-      const formData = new FormData();
-      formData.append("image", file);
+      // Convert file to base64 directly in the browser — no /api/upload needed
       try {
-        const res = await api.post("/upload", formData);
-        if (res.data.success) {
-          finalUrl = res.data.data;
-        } else {
-          toast({ title: "Upload failed", variant: "destructive" });
-          setUploading(false);
-          return;
-        }
+        finalUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('Failed to read file'));
+          reader.readAsDataURL(file);
+        });
       } catch (err: any) {
-        toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+        toast({ title: "Failed to process image", description: err.message, variant: "destructive" });
         setUploading(false);
         return;
       }
     }
 
-    if (!form.title.trim() || !finalUrl.trim()) {
-      toast({ title: "Title and file/URL are required", variant: "destructive" });
+    // For video with youtubeId, url is optional
+    const isVideo = form.mediaType === 'video';
+    if (!form.title.trim()) {
+      toast({ title: "Title is required", variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    if (!finalUrl.trim() && !form.youtubeId.trim()) {
+      toast({ title: "Please upload an image or provide a YouTube ID", variant: "destructive" });
       setUploading(false);
       return;
     }
@@ -136,10 +140,10 @@ const AdminGallery = () => {
       const payload = { ...form, url: finalUrl };
       if (isNew) {
         await api.post("/gallery", payload);
-        toast({ title: "Gallery item added" });
+        toast({ title: "Gallery item added ✓" });
       } else if (editItem) {
         await api.put(`/gallery/${editItem._id}`, payload);
-        toast({ title: "Gallery item updated" });
+        toast({ title: "Gallery item updated ✓" });
       }
       setDialogOpen(false);
       fetchGallery();
