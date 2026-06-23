@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import { Users, Droplet, HeartPulse, Building2, ImageIcon, PlayCircle, AlertTriangle, Phone, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -29,7 +30,8 @@ const Landing = () => {
   const { t } = useTranslation();
   const auth = useAuth();
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
-  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
 
   // Emergency form state
   const [emergencyForm, setEmergencyForm] = useState({
@@ -342,7 +344,11 @@ const Landing = () => {
                     <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">No photos available.</div>
                   ) : (
                     galleryItems.filter(item => item.mediaType === 'photo').map((item) => (
-                      <Card key={item._id} className="overflow-hidden border-0 shadow-card">
+                      <Card 
+                        key={item._id} 
+                        className="overflow-hidden border-0 shadow-card cursor-pointer transition-transform hover:scale-[1.02]"
+                        onClick={() => setSelectedImage(item)}
+                      >
                         <div className="relative bg-black/5 aspect-square">
                           <img src={item.url} alt={item.title} className="h-full w-full object-cover" />
                         </div>
@@ -390,6 +396,29 @@ const Landing = () => {
         </section>
       </main>
       <PublicFooter />
+
+      {/* Full Image Modal */}
+      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/95 border-0">
+          <DialogTitle className="sr-only">{selectedImage?.title}</DialogTitle>
+          <DialogDescription className="sr-only">{selectedImage?.description}</DialogDescription>
+          {selectedImage && (
+            <div className="relative flex flex-col items-center justify-center w-full h-full max-h-[90vh]">
+              <img 
+                src={selectedImage.url} 
+                alt={selectedImage.title} 
+                className="w-full h-full object-contain max-h-[80vh]"
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+                <h3 className="text-xl font-bold">{selectedImage.title}</h3>
+                {selectedImage.description && (
+                  <p className="text-sm mt-1 text-white/80">{selectedImage.description}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
