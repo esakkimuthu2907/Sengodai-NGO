@@ -17,7 +17,7 @@ const gallerySchema = new mongoose.Schema({
   },
   url: {
     type: String,
-    required: [true, 'Please add a URL']
+    default: ''
   },
   youtubeId: {
     type: String,
