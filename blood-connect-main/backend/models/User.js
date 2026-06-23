@@ -145,7 +145,7 @@ userSchema.pre('save', async function() {
     }
   }
 
-  if (this.role === 'admin' || this.role === 'volunteer') {
+  if (this.role === 'admin') {
     this.status = 'Approved';
   }
 
